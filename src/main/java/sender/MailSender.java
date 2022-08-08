@@ -1,29 +1,37 @@
 package sender;
 
+import java.io.File;
+import java.io.FileInputStream;
+
 import constants.AwsMailHost;
 import dto.BaseMailRequest;
+import dto.MailAttachement;
 import dto.StandardMailRequest;
 import jakarta.mail.Message;
 import jakarta.mail.Session;
 import jakarta.mail.Transport;
 import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.util.ByteArrayDataSource;
 
 public class MailSender {
 
 	public static void main(String[] args) throws Exception {
 
-		StandardMailRequest req = new StandardMailRequest.Builder().standardSmtpSetting()
-				.from("from").to("to")
-				.subject("Amazon SES test (SMTP interface accessed using Java)").body("<h1>TEST</h1>")
-				.contentType("text/html").host(AwsMailHost.TOKYO)
-				.smtpUser("smtp-user").smtpPassword("smtp-password").build();
-
+		StandardMailRequest req = new StandardMailRequest.Builder().standardSmtpSetting().from("************")
+				.to("************").subject("use jakarta.mail").body(new MailAttachement().text("test"))
+				.contentType("text/html").host(AwsMailHost.TOKYO).smtpUser("************").smtpPassword("************")
+				.addAttachment(new MailAttachement().fileName("test1.txt")
+						.file(new ByteArrayDataSource(new FileInputStream(new File("D:\\test1.txt")), "text/plain")))
+				.addAttachment(new MailAttachement().fileName("test2.txt")
+						.file(new ByteArrayDataSource(new FileInputStream(new File("D:\\test2.txt")), "text/plain")))
+				.build();
 		MailSender.sendEmail(req);
 	}
 
 	/**
 	 * メール送信
+	 * 
 	 * @param req
 	 * @throws Exception
 	 */
@@ -36,6 +44,7 @@ public class MailSender {
 		msg.setRecipient(Message.RecipientType.TO, new InternetAddress(req.to));
 		msg.setSubject(req.subject);
 		msg.setContent(req.body, req.contentType);
+		msg.setContent(req.multipart);
 
 		try (Transport transport = session.getTransport()) {
 			System.out.println("Sending...");

@@ -3,10 +3,11 @@ package dto;
 import constants.SmtpProperties;
 
 public class StandardMailRequest extends BaseMailRequest {
-	
+
 	private StandardMailRequest(Builder builder) {
 		super(builder);
 	}
+
 	public static class Builder extends BaseMailRequest.Builder<Builder> {
 
 		@Override
@@ -19,18 +20,13 @@ public class StandardMailRequest extends BaseMailRequest {
 		protected Builder self() {
 			return this;
 		}
-		
+
 		/**
 		 * SMTPの標準設定を適用する
 		 */
 		public Builder standardSmtpSetting() {
-			Builder builder = self();
-			builder.addSmtpProp(SmtpProperties.Protocol, "smtp");
-			builder.addSmtpProp(SmtpProperties.Port, 587);
-			builder.addSmtpProp(SmtpProperties.Starttls, "true");
-			builder.addSmtpProp(SmtpProperties.Auth, "true");
-			return self();
+			return self().addSmtpProp(SmtpProperties.Protocol, "smtp").addSmtpProp(SmtpProperties.Port, 587)
+					.addSmtpProp(SmtpProperties.Starttls, "true").addSmtpProp(SmtpProperties.Auth, "true");
 		}
-		
 	}
 }

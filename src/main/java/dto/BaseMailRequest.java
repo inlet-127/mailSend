@@ -4,6 +4,8 @@ import java.util.Properties;
 
 import constants.AwsMailHost;
 import constants.SmtpProperties;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMultipart;
 
 public abstract class BaseMailRequest {
 	public final String from;
@@ -12,12 +14,13 @@ public abstract class BaseMailRequest {
 	public final String subject;
 	public final String body;
 	public final String contentType;
-	public final Properties smtpProp; 
+	public final Properties smtpProp;
 	public final String smtpUser;
 	public final String smtpPassword;
 	public final String host;
-	
-	protected BaseMailRequest(Builder<?> builder){
+	public final MimeMultipart multipart;
+
+	protected BaseMailRequest(Builder<? extends Builder<?>> builder) {
 		this.from = builder.from;
 		this.to = builder.to;
 		this.subject = builder.subject;
@@ -28,8 +31,9 @@ public abstract class BaseMailRequest {
 		this.smtpPassword = builder.smtpPassword;
 		this.fromName = builder.fromName;
 		this.host = builder.host;
+		this.multipart = builder.multipart;
 	}
-	
+
 	abstract static class Builder<T extends Builder<T>> {
 		private String from;
 		private String fromName;
@@ -37,12 +41,15 @@ public abstract class BaseMailRequest {
 		private String subject;
 		private String body;
 		private String contentType;
-		private Properties smtpProp = new Properties(); 
+		private Properties smtpProp = new Properties();
 		private String smtpUser;
 		private String smtpPassword;
 		private String host;
+		private final MimeMultipart multipart = new MimeMultipart();
+
 		/**
 		 * 送信元アドレスを設定する
+		 * 
 		 * @param fromAddress 送信元アドレス
 		 * @return
 		 */
@@ -50,8 +57,10 @@ public abstract class BaseMailRequest {
 			this.from = fromAddress;
 			return self();
 		}
+
 		/**
 		 * 送信者名を設定する
+		 * 
 		 * @param fromAddress 送信元アドレス
 		 * @return
 		 */
@@ -59,8 +68,10 @@ public abstract class BaseMailRequest {
 			this.fromName = fromName;
 			return self();
 		}
+
 		/**
 		 * 送信先アドレスを設定する
+		 * 
 		 * @param to 送信元アドレス
 		 * @return
 		 */
@@ -68,8 +79,10 @@ public abstract class BaseMailRequest {
 			this.to = toAddress;
 			return self();
 		}
+
 		/**
 		 * 件名を設定する
+		 * 
 		 * @param body メール本文
 		 * @return
 		 */
@@ -77,8 +90,10 @@ public abstract class BaseMailRequest {
 			this.subject = subject;
 			return self();
 		}
+
 		/**
 		 * メール本文
+		 * 
 		 * @param body メール本文
 		 * @return
 		 */
@@ -86,46 +101,71 @@ public abstract class BaseMailRequest {
 			this.body = body;
 			return self();
 		}
+
+		/**
+		 * メール本文
+		 * 
+		 * @param body メール本文
+		 * @return
+		 */
+		public T body(MailAttachement body) {
+			try {
+				multipart.addBodyPart(body.part);
+			} catch (MessagingException e) {
+				throw new RuntimeException(e);
+			}
+			return self();
+		}
+
 		/**
 		 * コンテンツタイプ
+		 * 
 		 * @return
 		 */
 		public T contentType(String contentType) {
 			this.contentType = contentType;
 			return self();
 		}
+
 		/**
 		 * SMTPプロパティを追加する
+		 * 
 		 * @param key
 		 * @param value
 		 * @return
 		 */
-		public T addSmtpProp(String key, String value ) {
+		public T addSmtpProp(String key, String value) {
 			this.smtpProp.put(key, value);
 			return self();
 		}
+
 		/**
 		 * SMTPプロパティを追加する
+		 * 
 		 * @param key
 		 * @param value
 		 * @return
 		 */
-		public T addSmtpProp(SmtpProperties key, String value ) {
+		public T addSmtpProp(SmtpProperties key, String value) {
 			this.addSmtpProp(key.getProp(), value);
 			return self();
 		}
+
 		/**
 		 * SMTPプロパティを追加する
+		 * 
 		 * @param key
 		 * @param value
 		 * @return
 		 */
-		public T addSmtpProp(SmtpProperties key, int value ) {
+		public T addSmtpProp(SmtpProperties key, int value) {
 			this.smtpProp.put(key.getProp(), value);
 			return self();
 		}
+
 		/**
 		 * SMTPユーザを設定する
+		 * 
 		 * @param smtpUser
 		 * @return
 		 */
@@ -133,8 +173,10 @@ public abstract class BaseMailRequest {
 			this.smtpUser = smtpUser;
 			return self();
 		}
+
 		/**
 		 * SMTPパスワードを設定する
+		 * 
 		 * @param smtpPassword
 		 * @return
 		 */
@@ -142,8 +184,10 @@ public abstract class BaseMailRequest {
 			this.smtpPassword = smtpPassword;
 			return self();
 		}
+
 		/**
 		 * ホスト名を設定する
+		 * 
 		 * @param host
 		 * @return
 		 */
@@ -151,8 +195,10 @@ public abstract class BaseMailRequest {
 			this.host = host;
 			return self();
 		}
+
 		/**
 		 * ホスト名を設定する
+		 * 
 		 * @param host
 		 * @return
 		 */
@@ -160,8 +206,24 @@ public abstract class BaseMailRequest {
 			this.host(host.getHost());
 			return self();
 		}
+
+		/**
+		 * 添付ファイルを追加する
+		 * 
+		 * @param attachment
+		 * @return
+		 */
+		public T addAttachment(MailAttachement attachment) {
+			try {
+				multipart.addBodyPart(attachment.part);
+			} catch (MessagingException e) {
+				throw new RuntimeException(e);
+			}
+			return self();
+		}
+
 		abstract BaseMailRequest build();
-		
+
 		protected abstract T self();
 	}
 }
